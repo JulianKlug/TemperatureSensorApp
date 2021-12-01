@@ -1,4 +1,4 @@
-from datetime import time
+import time
 
 from read_sensor import get_readings
 
