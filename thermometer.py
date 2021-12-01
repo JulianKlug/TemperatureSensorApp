@@ -1,3 +1,5 @@
+from datetime import time
+
 from read_sensor import get_readings
 
 
@@ -14,6 +16,7 @@ class Thermometer():
             readings = get_readings(self.sensor_MAC)
             if readings:
                 self.temperature, _ = readings
+            time.sleep(self.measure_interval)
 
     def stop_measure(self):
         self.measure = False
