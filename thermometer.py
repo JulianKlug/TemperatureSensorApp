@@ -1,4 +1,5 @@
 import time
+from threading import Thread
 
 from read_sensor import get_readings
 
@@ -23,7 +24,8 @@ class Thermometer():
 
     def start_measure(self):
         self.measure = True
-        self.measure_temperature()
+        t = Thread(target=self.measure_temperature)
+        t.start()
 
     def get_temperature(self):
         return self.temperature
