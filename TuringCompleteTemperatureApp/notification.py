@@ -22,7 +22,7 @@ class Notification:
         if response:
             self.subscribed = True
         else:
-            print "Error subscribing: " + response.status + " " + response.reason            
+            print("Error subscribing: " + response.status + " " + response.reason)          
 
     def unsubscribe(self):
         self.subscribed = False

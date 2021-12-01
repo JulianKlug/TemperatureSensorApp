@@ -71,7 +71,6 @@
         <div class="span12">
 
           <form id="target_form" class="form form-horizontal" method="post">
-            {{ form.hidden_tag() }}
             {{ wtf.form_errors(form, False) }}
 
             {{ wtf.horizontal_field(form.field1) }}

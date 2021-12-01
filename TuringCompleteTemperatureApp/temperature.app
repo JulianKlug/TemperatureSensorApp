@@ -3,11 +3,12 @@
 
 from flask import Flask, render_template, json, jsonify, request, flash
 from flask_bootstrap import Bootstrap
-from flask_wtf import Form, TextField, HiddenField, ValidationError,\
-                          Required, IntegerField
-from flask_wtf.html5 import EmailField
+from flask_wtf import Form
+from wtforms.fields import StringField, IntegerField, HiddenField
+from wtforms.validators import ValidationError
+from wtforms.fields import EmailField
 from temperature import Temperature
-from notification import Notification
+#from notification import Notification
 import time, datetime, threading, copy
 
 class TargetForm(Form):
@@ -38,8 +39,9 @@ def index():
             flash('Target temperature set to ' + str(target) + ' F')
             temp.set_target(target)
             if form.field2.data:
-                notification = Notification(form.field2.data)
-                temp.add_notification(notification)
+                #notification = Notification(form.field2.data)
+                #temp.add_notification(notification)
+                print('notification placeholder')
     return render_template('index.html', form=form)
 
 @app.route("/data", methods=['GET'])
@@ -72,6 +74,6 @@ def data_history():
 if '__main__' == __name__:
     print("Starting app")
     temp.start()
-    app.run(host='0.0.0.0', port=80, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
     temp.stop()
     print("Exiting app")

@@ -5,7 +5,7 @@ import time
 import glob
 import sys
 from threading import Thread
-from notification import Notification
+#from notification import Notification
 from collections import deque
 
 from read_sensor import get_readings
@@ -117,7 +117,7 @@ class Temperature:
         time.sleep(1)
         print("target %i F" % (self.current_value + 2))
         self.set_target(self.current_value+2)
-        self.add_notification(Notification("todd@quessenberry.com"))
+ #       self.add_notification(Notification("todd@quessenberry.com"))
         self.current_value = self.current_value + 3
         self.check_target()
 
