@@ -10,7 +10,7 @@ from collections import deque
 
 from read_sensor import get_readings
 
-MAC_ADDRESS = 'REPLACE_HERE'
+MAC_ADDRESS = '78:DB:2F:CE:29:4C'
 
 def get_temp():
     readings = get_readings(mac_address=MAC_ADDRESS)

@@ -70,8 +70,8 @@ def data_history():
     return jsonify( { 'history': history } )
 
 if '__main__' == __name__:
-    print "Starting app"
+    print("Starting app")
     temp.start()
     app.run(host='0.0.0.0', port=80, debug=False, use_reloader=False)
     temp.stop()
-    print "Exiting app"
+    print("Exiting app")
