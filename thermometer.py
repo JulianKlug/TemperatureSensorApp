@@ -11,9 +11,9 @@ class Thermometer():
     # while measure true read sensor
     def measure_temperature(self):
         while self.measure:
-            measured_temperature, _ = get_readings(self.sensor_MAC)
-            if measured_temperature:
-                self.temperature = measured_temperature
+            readings = get_readings(self.sensor_MAC)
+            if readings:
+                self.temperature, _ = readings
 
     def stop_measure(self):
         self.measure = False
