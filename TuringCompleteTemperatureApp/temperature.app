@@ -2,10 +2,10 @@
 # coding=utf8
 
 from flask import Flask, render_template, json, jsonify, request, flash
-from flask.ext.bootstrap import Bootstrap
-from flask.ext.wtf import Form, TextField, HiddenField, ValidationError,\
+from flask_bootstrap import Bootstrap
+from flask_wtf import Form, TextField, HiddenField, ValidationError,\
                           Required, IntegerField
-from flask.ext.wtf.html5 import EmailField
+from flask_wtf.html5 import EmailField
 from temperature import Temperature
 from notification import Notification
 import time, datetime, threading, copy
