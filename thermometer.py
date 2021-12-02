@@ -2,12 +2,12 @@ import time
 from threading import Thread
 
 from read_sensor import get_readings
-
+import numpy as np
 
 class Thermometer():
     def __init__(self, sensor_MAC, measure_interval=5):
         self.sensor_MAC = sensor_MAC
-        self.temperature = None
+        self.temperature = np.NaN
         self.measure = True
         self.measure_interval = measure_interval
 

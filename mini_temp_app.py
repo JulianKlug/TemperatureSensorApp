@@ -1,7 +1,4 @@
-import os
-import glob
-
-from flask import Flask, Response, json
+from flask import Flask, Response
 
 from thermometer import Thermometer
 
@@ -17,8 +14,10 @@ def read_temp():
     temperature = thermometer.get_temperature()
     if not temperature:
         return Response(status=500)
-    # d = {'temp_c': temp_c, 'humidity': humidity, 'hot': ('true' if temp_c > 30 else 'false')}
-    d = {'temp_c': temperature}
-    return Response(json.dumps(d), mimetype='application/json')
 
-app.run(host='0.0.0.0')
+    d = f'<html><h1>Ob der Baechi</h1><br>' \
+        f'<h5>Sensor 1 </h5><br>' \
+        f'Temperature: {temperature} °C</html>'
+    return d
+
+app.run(host='0.0.0.0', port=5000)
