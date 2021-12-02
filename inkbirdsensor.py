@@ -1,6 +1,5 @@
 import time
 from threading import Thread
-from read_sensor import get_readings
 import numpy as np
 from bluepy import btle
 import logging
@@ -39,6 +38,9 @@ class InkbirdSensor():
 
     def get_temperature(self):
         return self.temperature
+
+    def get_humidity(self):
+        return self.humidity
 
     def convert_to_float_value(self, nums):
         # check if temp is negative

@@ -11,10 +11,10 @@ inkbird_sensor.start_measure()
 
 @app.route("/temp")
 def read_temp():
-    readings = InkbirdSensor.get_temperature()
-    if not readings:
+    temperature = inkbird_sensor.get_temperature()
+    humidity = inkbird_sensor.get_humidity()
+    if not temperature or not humidity:
         return Response(status=500)
-    temperature, humidity = readings
 
     d = f'<html><h1>Ob der Baechi</h1><br>' \
         f'<h5>Sensor 1 </h5><br>' \
