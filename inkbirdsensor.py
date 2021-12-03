@@ -17,6 +17,7 @@ class InkbirdSensor():
         self.sensor_MAC = sensor_MAC
         self.temperature = np.NaN
         self.humidity = np.NaN
+        self.last_measure_time_string = np.NaN
         self.measure = True
         self.measure_interval = measure_interval
 
@@ -26,6 +27,7 @@ class InkbirdSensor():
             readings = self.read_sensor(self.sensor_MAC)
             if readings:
                 self.temperature, self.humidity = readings
+                self.last_measure_time_string = time.strftime("%d-%m-%Y %H:%M:%S", time.gmtime())
             time.sleep(self.measure_interval)
 
     def stop_measure(self):
@@ -41,6 +43,9 @@ class InkbirdSensor():
 
     def get_humidity(self):
         return self.humidity
+
+    def get_last_measure_time_string(self):
+        return self.last_measure_time_string
 
     def convert_to_float_value(self, nums):
         # check if temp is negative

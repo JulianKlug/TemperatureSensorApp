@@ -13,13 +13,15 @@ inkbird_sensor.start_measure()
 def read_temp():
     temperature = inkbird_sensor.get_temperature()
     humidity = inkbird_sensor.get_humidity()
+    last_measure_time_string = inkbird_sensor.get_last_measure_time_string()
     if not temperature or not humidity:
         return Response(status=500)
 
     d = f'<html><h1>Ob der Baechi</h1><br>' \
         f'<h5>Sensor 1 </h5><br>' \
         f'Temperature: {temperature} °C<br>' \
-        f'Humidity: {humidity}%</html>'
+        f'Humidity: {humidity}%<br>' \
+        f'<i>Last measure: {last_measure_time_string}</i></html>'
     return d
 
 app.run(host='0.0.0.0', port=5000)
