@@ -3,7 +3,7 @@ Read the temperature and humidity from sensors and upload them to the mongodb.
 This script is executed every 5 minutes as a cronjob.
 """
 import json
-from datetime import datetime
+import time
 from pathlib import Path
 
 from pymongo import MongoClient
@@ -29,7 +29,7 @@ if temperature:
         {
             'temp': temperature,
             'humidity': humidity,
-            'date': datetime.utcnow()
+            'date': time.strftime("%d-%m-%Y %H:%M:%S", time.gmtime())
         }
 
     )
