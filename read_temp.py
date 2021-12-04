@@ -10,7 +10,7 @@ from pymongo import MongoClient
 
 from inkbirdsensor import InkbirdSensor
 
-config_path = Path('~/.config/burchen_db.json').expanduser()
+config_path = Path('/home/hendrik/.config/burchen_db.json')
 
 with open(config_path, 'rt') as json_file:
     config = json.load(json_file)
