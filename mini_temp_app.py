@@ -25,12 +25,17 @@ def read_temp():
 
     if not values:
         return Response(status=500)
-
-    return f'<html><h1>Ob der Baechi</h1><br>' \
+    return f'<html>' \
+           f'<h1>Ob der Baechi</h1><br>' \
            f'<h5>Sensor 1 </h5><br>' \
            f'Temperature: {values["temp"]} °C<br>' \
            f'Humidity: {values["humidity"]}%<br>' \
-           f'<i>Last measure: {values["date"]}</i></html>'
+           f'<i>Last measure: {values["date"]}</i><br>' \
+           f'<div width:100vh height:100vh>' \
+           f'<img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"' \
+           f'style="padding: 0 5px 10px 10px; position: absolute; bottom: 0; right: 0;">' \
+           f'</div>' \
+           f'</html>'
 
 
 if __name__ == '__main__':
