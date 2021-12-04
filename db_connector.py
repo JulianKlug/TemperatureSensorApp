@@ -22,16 +22,16 @@ collection = db.inkbird1
 MAC_ADDRESS = '78:DB:2F:CE:29:4C'
 
 inkbird_sensor = InkbirdSensor(MAC_ADDRESS)
-
 temperature, humidity = inkbird_sensor.get_measurements()
 
-print('temp: ', temperature, 'hum', humidity)
+if temperature:
+    print('temp: ', temperature, 'hum', humidity)
 
-collection.insert_one(
-    {
-        'temp': temperature,
-        'humidity': humidity,
-        'date': datetime.utcnow()
-    }
+    collection.insert_one(
+        {
+            'temp': temperature,
+            'humidity': humidity,
+            'date': datetime.utcnow()
+        }
 
-)
+    )
