@@ -2,17 +2,18 @@
 Read the temperature and humidity from sensors and upload them to the mongodb.
 This script is executed every 5 minutes as a cronjob.
 """
+import json
 from datetime import datetime
 from pathlib import Path
 
-from modun.file_io import json2dict
 from pymongo import MongoClient
 
 from inkbirdsensor import InkbirdSensor
 
 config_path = Path('~/.config/burchen_db.json').expanduser()
 
-config = json2dict(config_path)
+with open(config_path, 'rt') as json_file:
+    config = json.load(json_file)
 
 client = MongoClient(config['mongo_uri'])
 db = client.ppb
