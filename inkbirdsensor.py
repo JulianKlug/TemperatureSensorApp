@@ -18,8 +18,8 @@ class InkbirdSensor():
         self.temperature = np.NaN
         self.humidity = np.NaN
         self.last_measure_time_string = np.NaN
-        self.measure = True
-        self.measure_interval = measure_interval
+        # self.measure = True
+        # self.measure_interval = measure_interval
 
     # while measure true read sensor
     def measurement_loop(self):
@@ -38,7 +38,16 @@ class InkbirdSensor():
         t = Thread(target=self.measurement_loop)
         t.start()
 
+    def get_measurements(self):
+        readings = self.read_sensor(self.sensor_MAC)
+
+        temperature_c = self.convert_to_float_value(readings[0:2])
+        humidity = self.convert_to_float_value(readings[2:4])
+
+        return temperature_c, humidity
+
     def get_temperature(self):
+
         return self.temperature
 
     def get_humidity(self):
@@ -54,14 +63,21 @@ class InkbirdSensor():
             num = -((num ^ 0xffff) + 1)
         return float(num) / 100
 
-
     def read_sensor(self, mac_address: str):
-        try:
-            dev = btle.Peripheral(mac_address, addrType=btle.ADDR_TYPE_PUBLIC)
-            readings = dev.readCharacteristic(0x002d)
-        except Exception as e:
-            logging.error("Error reading BTLE: {}".format(e))
-            return False
+        """Try to connect to sensor every 10 seconds for 5 minutes."""
+        nbr_tries = 0
+        connection_failed = True
+        while connection_failed:
+            if nbr_tries > 30:
+                return np.nan, np.nan
+            try:
+                dev = btle.Peripheral(mac_address, addrType=btle.ADDR_TYPE_PUBLIC)
+                readings = dev.readCharacteristic(0x002d)
+                connection_failed = False
+            except Exception as e:
+                print("Error reading BTLE: {}".format(e))
+                time.sleep(10)
+                nbr_tries += 1
 
         # little endian, first two bytes are temp_c, second two bytes are humidity
         temperature_c = self.convert_to_float_value(readings[0:2])
@@ -69,6 +85,5 @@ class InkbirdSensor():
 
         logging.info(
             "converted data: temperature_c[{:0.2f}], humidity[{:0.2f}]".format(temperature_c, humidity))
-
 
         return temperature_c, humidity

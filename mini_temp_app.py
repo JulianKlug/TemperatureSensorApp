@@ -9,6 +9,7 @@ MAC_ADDRESS = '78:DB:2F:CE:29:4C'
 inkbird_sensor = InkbirdSensor(MAC_ADDRESS)
 inkbird_sensor.start_measure()
 
+
 @app.route("/temp")
 def read_temp():
     temperature = inkbird_sensor.get_temperature()
@@ -24,4 +25,6 @@ def read_temp():
         f'<i>Last measure: {last_measure_time_string}</i></html>'
     return d
 
-app.run(host='0.0.0.0', port=5000)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
