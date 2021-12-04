@@ -14,7 +14,7 @@ def get_values_from_db(collection):
             return elem
 
 
-@app.route("/temp")
+@app.route("/")
 def read_temp():
     config = json2dict(Path('~/.config/burchen_db.json').expanduser())
     client = MongoClient(config['mongo_uri'])
