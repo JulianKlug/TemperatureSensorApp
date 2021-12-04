@@ -27,7 +27,7 @@ def read_temp():
         return Response(status=500)
     return f'<html>' \
            f'<h1>Ob der Baechi</h1><br>' \
-           f'<h5>Sensor 1 </h5><br>' \
+           f'<b>Sensor 1 </b><br>' \
            f'Temperature: {values["temp"]} °C<br>' \
            f'Humidity: {values["humidity"]}%<br>' \
            f'<i>Last measure: {values["date"]}</i><br>' \
