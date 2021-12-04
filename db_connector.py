@@ -25,8 +25,6 @@ inkbird_sensor = InkbirdSensor(MAC_ADDRESS)
 temperature, humidity = inkbird_sensor.get_measurements()
 
 if temperature:
-    print('temp: ', temperature, 'hum', humidity)
-
     collection.insert_one(
         {
             'temp': temperature,
