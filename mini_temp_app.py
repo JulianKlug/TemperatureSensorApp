@@ -1,29 +1,36 @@
-from flask import Flask, Response
+from pathlib import Path
 
-from inkbirdsensor import InkbirdSensor
+import numpy as np
+from flask import Flask, Response
+from modun.file_io import json2dict
+from pymongo import MongoClient
 
 app = Flask(__name__)
 
-MAC_ADDRESS = '78:DB:2F:CE:29:4C'
 
-inkbird_sensor = InkbirdSensor(MAC_ADDRESS)
-inkbird_sensor.start_measure()
+def get_values_from_db(collection):
+    for elem in collection.find({}).sort("_id", -1):
+        if not np.isnan(elem['temp']):
+            return elem
 
 
 @app.route("/temp")
 def read_temp():
-    temperature = inkbird_sensor.get_temperature()
-    humidity = inkbird_sensor.get_humidity()
-    last_measure_time_string = inkbird_sensor.get_last_measure_time_string()
-    if not temperature or not humidity:
+    config = json2dict(Path('~/.config/burchen_db.json').expanduser())
+    client = MongoClient(config['mongo_uri'])
+    db = client.ppb
+    collection = db.inkbird1
+
+    values = get_values_from_db(collection)
+
+    if not values:
         return Response(status=500)
 
-    d = f'<html><h1>Ob der Baechi</h1><br>' \
-        f'<h5>Sensor 1 </h5><br>' \
-        f'Temperature: {temperature} °C<br>' \
-        f'Humidity: {humidity}%<br>' \
-        f'<i>Last measure: {last_measure_time_string}</i></html>'
-    return d
+    return f'<html><h1>Ob der Baechi</h1><br>' \
+           f'<h5>Sensor 1 </h5><br>' \
+           f'Temperature: {values["temp"]} °C<br>' \
+           f'Humidity: {values["humidity"]}%<br>' \
+           f'<i>Last measure: {values["date"]}</i></html>'
 
 
 if __name__ == '__main__':
