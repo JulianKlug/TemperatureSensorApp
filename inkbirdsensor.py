@@ -41,10 +41,7 @@ class InkbirdSensor():
     def get_measurements(self):
         readings = self.read_sensor(self.sensor_MAC)
 
-        temperature_c = self.convert_to_float_value(readings[0:2])
-        humidity = self.convert_to_float_value(readings[2:4])
-
-        return temperature_c, humidity
+        return readings
 
     def get_temperature(self):
 
