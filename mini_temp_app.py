@@ -19,18 +19,24 @@ def read_temp():
     config = json2dict(Path('~/.config/burchen_db.json').expanduser())
     client = MongoClient(config['mongo_uri'])
     db = client.ppb
-    collection = db.inkbird1
+    inkbird1_collection = db.inkbird1
+    HA_sensor1_collection = db.HA_sensor1
 
-    values = get_values_from_db(collection)
+    inkbird1_values = get_values_from_db(inkbird1_collection)
+    HA_sensor1_values = get_values_from_db(HA_sensor1_collection)
 
-    if not values:
+    if not inkbird1_values:
         return Response(status=500)
     return f'<html>' \
-           f'<h1>Ob der Baechi</h1><br>' \
+           f'<h1>Ob der Baechi</h1>' \
+           f'<br>' \
            f'<b>Sensor 1 </b><br>' \
-           f'Temperature: {values["temp"]} °C<br>' \
-           f'Humidity: {values["humidity"]}%<br>' \
-           f'<i>Last measure: {values["date"]}</i><br>' \
+           f'Temperature: {inkbird1_values["temp"]} °C<br>' \
+           f'Humidity: {inkbird1_values["humidity"]}%<br>' \
+           f'<i>Last measure: {inkbird1_values["date"]}</i><br>' \
+           f'<b>Sensor 2 </b><br>' \
+           f'Temperature: {HA_sensor1_values["temp"]} °C<br>' \
+           f'Humidity: {HA_sensor1_values["humidity"]}%<br>' \
            f'<div width:100vh height:100vh>' \
            f'<img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"' \
            f'style="padding: 0 5px 10px 10px; position: absolute; bottom: 0; right: 0;">' \
