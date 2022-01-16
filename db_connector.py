@@ -18,7 +18,8 @@ with open(config_path, 'rt') as json_file:
 # setup database connection
 client = MongoClient(config['mongo_uri'])
 db = client.ppb
-collection = db.inkbird1
+inkbird1_collection = db.inkbird1
+HA_sensor1_collection = db.HA_sensor1
 
 # setup inkbird sensor
 INKBIRD_MAC_ADDRESS = '78:DB:2F:CE:29:4C'
@@ -32,9 +33,17 @@ home_assistant_sensor = HomeAssistantSensor(config['home_assistant_api_url'],
                                             config['home_assistant_api_token'])
 home_assistant_temperature, home_assistant_humidity = home_assistant_sensor.get_measurements()
 
+HA_sensor1_collection.insert_one(
+    {
+        'temp': home_assistant_temperature,
+        'humidity': home_assistant_humidity,
+        'date': time.strftime("%d-%m-%Y %H:%M:%S", time.gmtime())
+    }
+
+)
 
 if inkbird_temperature:
-    collection.insert_one(
+    inkbird1_collection.insert_one(
         {
             'temp': inkbird_temperature,
             'humidity': inkbird_humidity,
