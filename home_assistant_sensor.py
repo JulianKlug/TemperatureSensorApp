@@ -20,4 +20,4 @@ class HomeAssistantSensor():
     def read_sensor(self):
         temperature = self.read_status(self.temperature_entity_id)
         humidity = self.read_status(self.humidity_entity_id)
-        return temperature, humidity
+        return float(temperature), float(humidity)

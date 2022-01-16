@@ -36,7 +36,8 @@ def read_temp():
            f'<i>Last measure: {inkbird1_values["date"]}</i><br>' \
            f'<b>Sensor 2 </b><br>' \
            f'Temperature: {HA_sensor1_values["temp"]} °C<br>' \
-           f'Humidity: {HA_sensor1_values["humidity"]}%<br>' \
+           f'Humidity: {HA_sensor1_values["humidity"]}%<br> ' \
+           f'<i>Last measure: {HA_sensor1_values["date"]}</i><br>' \
            f'<div width:100vh height:100vh>' \
            f'<img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"' \
            f'style="padding: 0 5px 10px 10px; position: absolute; bottom: 0; right: 0;">' \
