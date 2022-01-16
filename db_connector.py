@@ -21,11 +21,6 @@ db = client.ppb
 inkbird1_collection = db.inkbird1
 HA_sensor1_collection = db.HA_sensor1
 
-# setup inkbird sensor
-INKBIRD_MAC_ADDRESS = '78:DB:2F:CE:29:4C'
-inkbird_sensor = InkbirdSensor(INKBIRD_MAC_ADDRESS)
-inkbird_temperature, inkbird_humidity = inkbird_sensor.get_measurements()
-
 # setup home assistant sensor
 home_assistant_sensor = HomeAssistantSensor(config['home_assistant_api_url'],
                                             config['home_assistant_temperature_entity_id'],
@@ -33,6 +28,7 @@ home_assistant_sensor = HomeAssistantSensor(config['home_assistant_api_url'],
                                             config['home_assistant_api_token'])
 home_assistant_temperature, home_assistant_humidity = home_assistant_sensor.get_measurements()
 
+# insert HA values to db
 HA_sensor1_collection.insert_one(
     {
         'temp': home_assistant_temperature,
@@ -41,6 +37,11 @@ HA_sensor1_collection.insert_one(
     }
 
 )
+
+# setup inkbird sensor
+INKBIRD_MAC_ADDRESS = '78:DB:2F:CE:29:4C'
+inkbird_sensor = InkbirdSensor(INKBIRD_MAC_ADDRESS)
+inkbird_temperature, inkbird_humidity = inkbird_sensor.get_measurements()
 
 if inkbird_temperature:
     inkbird1_collection.insert_one(
