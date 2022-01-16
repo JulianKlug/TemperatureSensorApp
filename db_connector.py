@@ -26,7 +26,7 @@ home_assistant_sensor = HomeAssistantSensor(config['home_assistant_api_url'],
                                             config['home_assistant_temperature_entity_id'],
                                             config['home_assistant_humidity_entity_id'],
                                             config['home_assistant_api_token'])
-home_assistant_temperature, home_assistant_humidity = home_assistant_sensor.get_measurements()
+home_assistant_temperature, home_assistant_humidity = home_assistant_sensor.read_sensor()
 
 # insert HA values to db
 HA_sensor1_collection.insert_one(
