@@ -1,61 +1,55 @@
 <!DOCTYPE html>
 <html>
 
-
 <head>
     <title>Ob der Baechi</title>
     <style>
+        .card {
+            margin: auto;
+            margin-top: 20px;
+            width: 80%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        }
+
         h1 {
-            font-size: 3em;
+            font-size: 36px;
+            text-align: center;
         }
 
         h2 {
-            font-size: 2em;
+            font-size: 24px;
+            text-align: center;
         }
 
-        h3 {
-            font-size: 1.5em;
-        }
-
-        h4 {
-            font-size: 1.2em;
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            width: 40%;
         }
 
     </style>
 </head>
 
-
 <body>
-<h1>Ob der Baechi</h1>
-<div style="display: flex; flex-direction: row;">
-    <div style="flex: 1;">
+<div class="card">
+    <h1>Ob der Baechi</h1>
+    <hr>
+    <div class="card-body">
         <h2>Sensor 1</h2>
-        <p>Temperature: {{ temperature }} &deg;C</p>
-        <p>Humidity: {{ humidity }} %</p>
-        <div>
-            <h3>Min/Max Values (Last 24 Hours)</h3>
-            <p>Temperature:</p>
-            <ul>
-                <li>Min: {{ min_temperature }} &deg;C</li>
-                <li>Max: {{ max_temperature }} &deg;C</li>
-            </ul>
-            <p>Humidity:</p>
-            <ul>
-                <li>Min: {{ min_humidity }} %</li>
-                <li>Max: {{ max_humidity }} %</li>
-            </ul>
-        </div>
-    </div>
-    <div style="flex: 1;">
-        <img src="data:image/png;base64,{{ plot_data }}" alt="Temperature and Humidity Plot"/>
+        <p>Temperature: {{temperature}}&deg;C (min: {{min_temperature}}&deg;C, max: {{max_temperature}}&deg;C)</p>
+        <p>Humidity: {{humidity}}% (min: {{min_humidity}}%, max: {{max_humidity}}%)</p>
+        <p>Last entry is from {{last_entry}}</p>
+        <img src="data:image/png;base64,{{plot_data}}" alt="Plot of past temperature and humidity values">
     </div>
 </div>
-
 
 <div width:100vh height:100vh>
     <img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"
          style="padding: 0 5px 10px 10px; position: absolute; bottom: 0; right: 0;">
 </div>
 </body>
-</html>
 
+</html>

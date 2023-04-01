@@ -74,7 +74,7 @@ def index():
     # Render the HTML page with the current temperature and humidity values, and the plot
     return render_template('index.html', plot_data=plot_data, min_temperature=min(past_temperatures),
                            max_temperature=max(past_temperatures), min_humidity=min(past_humidities),
-                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity)
+                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity, last_entry=timestamps[-1])
 
 
 @app.route('/data', methods=['POST'])
