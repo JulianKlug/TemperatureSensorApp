@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from datetime import timezone
 from io import BytesIO
 import base64
+import plotly.graph_objs as go
 
 
 @dataclass
@@ -71,7 +72,9 @@ def index():
     plot_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
     # Render the HTML page with the current temperature and humidity values, and the plot
-    return render_template('index.html', temperature=temperature, humidity=humidity, plot_data=plot_data)
+    return render_template('index.html', plot_data=plot_data, min_temperature=min(past_temperatures),
+                           max_temperature=max(past_temperatures), min_humidity=min(past_humidities),
+                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity)
 
 
 @app.route('/data', methods=['POST'])
