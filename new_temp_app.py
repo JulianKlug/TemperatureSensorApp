@@ -9,7 +9,10 @@ import plotly.graph_objs as go
 from flask import Flask, request, render_template
 from pymongo import MongoClient
 
+from utils.NotificationSystem import NotificationSystem
+
 config_fn = Path("~/.config/buerchen_config.json").expanduser()
+notification_system = NotificationSystem(config_fn['email_address'], config_fn['recipient_address'])
 
 
 @dataclass
@@ -36,6 +39,7 @@ client = MongoClient(CONFIG.mongodb_URI)
 db = client[CONFIG.mongodb_database]
 collection = db[CONFIG.mongodb_collection]
 
+notification_system.send_message("Buerchen temperature surveillance servec started", "<3")
 
 def delete_all_documents():
     # Delete all documents from the collection
@@ -91,6 +95,11 @@ def handle_data():
     }
     result = collection.insert_one(data)
     print(f"received data: {data}")
+
+    temp_warn_limit = 5
+    if temperature < temp_warn_limit:
+        notification_system.send_message(f"Temperature in Bürchen is below {temp_warn_limit}", f"Temperature is {temperature}°C")
+
     return f"Data inserted with ID: {result.inserted_id}"
 
 
