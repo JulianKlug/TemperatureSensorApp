@@ -12,14 +12,21 @@ from pymongo import MongoClient
 from utils.NotificationSystem import NotificationSystem
 
 config_fn = Path("~/.config/buerchen_config.json").expanduser()
-notification_system = NotificationSystem(config_fn['email_address'], config_fn['recipient_address'])
 
 
 @dataclass
 class Config:
+    # db setttings
     mongodb_URI: str = None
     mongodb_database: str = None
     mongodb_collection: str = None
+
+    # notification settings
+    notification_sender_address: str = None
+    notification_receiver_addresses: list[str] = None
+    temp_warn_limit: int = 5
+
+    # port
     flask_port: int = 5000
 
     def from_config(self):
@@ -28,18 +35,22 @@ class Config:
             self.mongodb_URI = config["mongodb_URI"]
             self.mongodb_database = config["mongodb_database"]
             self.mongodb_collection = config["mongodb_collection"]
+            self.notification_sender_address = config["sender_address"]
+            self.notification_receiver_addresses = config["receiver_addresses"]
 
         return self
 
 
 CONFIG = Config().from_config()
 
+# setup notification
+notification_system = NotificationSystem('hendrik.klug@gmail.com', ['hendrik.klug@gmail.com', "tensu.wave@gmail.com"])
+
 app = Flask(__name__)
 client = MongoClient(CONFIG.mongodb_URI)
 db = client[CONFIG.mongodb_database]
 collection = db[CONFIG.mongodb_collection]
 
-notification_system.send_message("Buerchen temperature surveillance servec started", "<3")
 
 def delete_all_documents():
     # Delete all documents from the collection
@@ -71,7 +82,6 @@ def index():
     fig.update_layout(
         xaxis_title='Timestamp',
         yaxis_title='Value')
-    # plot_data = opy.plot(fig, auto_open=False, output_type='div')
     plot_data = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
     # Convert the last timestamp to a string:
@@ -86,19 +96,19 @@ def index():
 
 @app.route('/data', methods=['POST'])
 def handle_data():
-    temperature = request.form['temperature']
-    humidity = request.form['humidity']
+    temperature = float(request.form['temperature'])
+    humidity = float(request.form['humidity'])
     data = {
-        'temperature': float(temperature),
-        'humidity': float(humidity),
+        'temperature': temperature,
+        'humidity': humidity,
         'date': datetime.now(timezone.utc),
     }
     result = collection.insert_one(data)
     print(f"received data: {data}")
 
-    temp_warn_limit = 5
-    if temperature < temp_warn_limit:
-        notification_system.send_message(f"Temperature in Bürchen is below {temp_warn_limit}", f"Temperature is {temperature}°C")
+    if temperature < CONFIG.temp_warn_limit:
+        notification_system.notify(f"Temperature in Bürchen is below {CONFIG.temp_warn_limit}",
+                                   f"Temperature is {temperature}°C")
 
     return f"Data inserted with ID: {result.inserted_id}"
 
