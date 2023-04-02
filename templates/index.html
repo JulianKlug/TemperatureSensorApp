@@ -3,6 +3,7 @@
 
 <head>
     <title>Ob der Baechi</title>
+
     <style>
         .card {
             margin: auto;
@@ -27,10 +28,10 @@
             display: block;
             margin-left: auto;
             margin-right: auto;
-            width: 40%;
+            width: 30%;
         }
-
     </style>
+
 </head>
 
 <body>
@@ -42,14 +43,22 @@
         <p>Temperature: {{temperature}}&deg;C (min: {{min_temperature}}&deg;C, max: {{max_temperature}}&deg;C)</p>
         <p>Humidity: {{humidity}}% (min: {{min_humidity}}%, max: {{max_humidity}}%)</p>
         <p>Last entry is from {{last_entry}}</p>
-        <img src="data:image/png;base64,{{plot_data}}" alt="Plot of past temperature and humidity values">
+
+        <div id='chart' class='chart'></div>
     </div>
+
 </div>
 
 <div width:100vh height:100vh>
     <img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"
          style="padding: 0 5px 10px 10px; position: absolute; bottom: 0; right: 0;">
 </div>
-</body>
 
+
+</body>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{plot_data | safe}};
+  Plotly.plot('chart',graphs,{});
+</script>
 </html>

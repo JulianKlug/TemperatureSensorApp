@@ -1,24 +1,35 @@
+import json
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from datetime import timezone
+from pathlib import Path
 
+import plotly
+import plotly.graph_objs as go
 from flask import Flask, request, render_template
 from pymongo import MongoClient
-from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
-from datetime import timezone
-from io import BytesIO
-import base64
-import plotly.graph_objs as go
+
+config_fn = Path("~/.config/buerchen_config.json").expanduser()
 
 
 @dataclass
 class Config:
-    mongodb_URI: str = "mongodb://buerchen:K(;qifxzr.bh2d<xHA@localhost:27019/Buerchen?directConnection=true&serverSelectionTimeoutMS=2000&authSource=Buerchen"
-    mongodb_database: str = "Buerchen"
-    mongodb_collection: str = "Buerchen Temperatures"
+    mongodb_URI: str = None
+    mongodb_database: str = None
+    mongodb_collection: str = None
     flask_port: int = 5000
 
+    def from_config(self):
+        with open(config_fn) as f:
+            config = json.load(f)
+            self.mongodb_URI = config["mongodb_URI"]
+            self.mongodb_database = config["mongodb_database"]
+            self.mongodb_collection = config["mongodb_collection"]
 
-CONFIG = Config()
+        return self
+
+
+CONFIG = Config().from_config()
 
 app = Flask(__name__)
 client = MongoClient(CONFIG.mongodb_URI)
@@ -49,32 +60,24 @@ def index():
 
     print(f"past_temperatures: {past_temperatures}")
 
-    # Generate a plot of the past temperature and humidity values
-    fig, ax1 = plt.subplots()
-    color = 'tab:red'
-    ax1.set_xlabel('Timestamp')
-    ax1.set_ylabel('Temperature (C)', color=color)
-    ax1.plot(timestamps, past_temperatures, color=color)
-    ax1.tick_params(axis='y', labelcolor=color)
+    # Create an interactive plot of the past temperature and humidity values
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=timestamps, y=past_temperatures, name='Temperature'))
+    fig.add_trace(go.Scatter(x=timestamps, y=past_humidities, name='Humidity'))
+    fig.update_layout(
+        xaxis_title='Timestamp',
+        yaxis_title='Value')
+    # plot_data = opy.plot(fig, auto_open=False, output_type='div')
+    plot_data = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    ax2 = ax1.twinx()
-    color = 'tab:blue'
-    ax2.set_ylabel('Humidity (%)', color=color)
-    ax2.plot(timestamps, past_humidities, color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    fig.tight_layout()
-
-    # Convert the plot to a base64-encoded string for display in the HTML page
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png')
-    plt.close()
-    plot_data = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    # Convert the last timestamp to a string:
+    last_entry = timestamps[-1].strftime("%Y-%m-%d %H:%M")
 
     # Render the HTML page with the current temperature and humidity values, and the plot
     return render_template('index.html', plot_data=plot_data, min_temperature=min(past_temperatures),
                            max_temperature=max(past_temperatures), min_humidity=min(past_humidities),
-                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity, last_entry=timestamps[-1])
+                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity,
+                           last_entry=last_entry)
 
 
 @app.route('/data', methods=['POST'])
