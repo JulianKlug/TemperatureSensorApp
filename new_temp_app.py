@@ -8,8 +8,11 @@ import plotly
 import plotly.graph_objs as go
 from flask import Flask, request, render_template
 from pymongo import MongoClient
+import pytz
 
 config_fn = Path("~/.config/buerchen_config.json").expanduser()
+
+local_timezone = pytz.timezone('Europe/Zurich')
 
 
 @dataclass
@@ -51,7 +54,7 @@ def index():
     humidity = latest_data['humidity']
 
     # Get the past temperature and humidity values from the database
-    now = datetime.now(timezone.utc)
+    now = datetime.now(local_timezone)
     past = now - timedelta(hours=24)
     past_data = list(collection.find({'date': {'$gte': past}}))
     past_temperatures = [data['temperature'] for data in past_data]
@@ -87,7 +90,7 @@ def handle_data():
     data = {
         'temperature': float(temperature),
         'humidity': float(humidity),
-        'date': datetime.now(timezone.utc),
+        'date': datetime.now(local_timezone)
     }
     result = collection.insert_one(data)
     print(f"received data: {data}")
