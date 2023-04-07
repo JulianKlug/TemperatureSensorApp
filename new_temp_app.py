@@ -1,14 +1,13 @@
 import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from datetime import timezone
 from pathlib import Path
 
 import plotly
 import plotly.graph_objs as go
+import pytz
 from flask import Flask, request, render_template
 from pymongo import MongoClient
-import pytz
 
 from utils.NotificationSystem import NotificationSystem
 
@@ -76,15 +75,16 @@ def index():
     past_humidities = [data['humidity'] for data in past_data]
     timestamps = [data['date'] for data in past_data]
 
-    print(f"past_temperatures: {past_temperatures}")
-
     # Create an interactive plot of the past temperature and humidity values
     fig = go.Figure()
+    fig.add_trace(go.Scatter(x=timestamps, y=past_humidities, name='Humidity', yaxis='y2'))
     fig.add_trace(go.Scatter(x=timestamps, y=past_temperatures, name='Temperature'))
-    fig.add_trace(go.Scatter(x=timestamps, y=past_humidities, name='Humidity'))
     fig.update_layout(
         xaxis_title='Timestamp',
-        yaxis_title='Value')
+        yaxis=dict(title='Temperature (Celsius)'),
+        yaxis2=dict(title='Humidity (%)', overlaying='y', side='right'),
+        hovermode='closest'
+    )
     plot_data = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
     # Convert the last timestamp to a string:
