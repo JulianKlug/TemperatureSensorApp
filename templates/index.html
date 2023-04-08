@@ -38,16 +38,10 @@
 <div class="card">
     <h1>Ob der Baechi</h1>
     <hr>
-    <div class="card-body">
-        <h2>Sensor 1</h2>
-        <p>Temperature: {{temperature}}&deg;C (min: {{min_temperature}}&deg;C, max: {{max_temperature}}&deg;C)</p>
-        <p>Humidity: {{humidity}}% (min: {{min_humidity}}%, max: {{max_humidity}}%)</p>
-        <p>Last entry is from {{last_entry}}</p>
-
-        <div id='chart' class='chart'></div>
-    </div>
-
 </div>
+
+
+HTML_PLACEHOLDER
 
 <div width:100vh height:100vh>
     <img src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png" alt="Ceyna"
@@ -58,7 +52,8 @@
 </body>
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 <script type='text/javascript'>
-  var graphs = {{plot_data | safe}};
-  Plotly.plot('chart',graphs,{});
+
+JS_PLACEHOLDER
+
 </script>
 </html>

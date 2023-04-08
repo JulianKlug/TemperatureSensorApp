@@ -7,13 +7,16 @@ import plotly
 import plotly.graph_objs as go
 import pytz
 from flask import Flask, request, render_template
-from pymongo import MongoClient
+# from pymongo import MongoClient
 
 from utils.NotificationSystem import NotificationSystem
+from sensor_card import Sensor_card
 
 config_fn = Path("~/.config/buerchen_config.json").expanduser()
 
 local_timezone = pytz.timezone('Europe/Zurich')
+
+PORT = 3333
 
 
 @dataclass
@@ -29,7 +32,7 @@ class Config:
     temp_warn_limit: int = 5
 
     # port
-    flask_port: int = 5000
+    flask_port: int = PORT
 
     def from_config(self):
         with open(config_fn) as f:
@@ -62,11 +65,6 @@ def delete_all_documents():
 
 @app.route('/')
 def index():
-    # Get the latest temperature and humidity values from the database
-    latest_data = collection.find_one(sort=[('_id', -1)])
-    temperature = latest_data['temperature']
-    humidity = latest_data['humidity']
-
     # Get the past temperature and humidity values from the database
     now = datetime.now(local_timezone)
     past = now - timedelta(hours=24)
@@ -75,26 +73,19 @@ def index():
     past_humidities = [data['humidity'] for data in past_data]
     timestamps = [data['date'] for data in past_data]
 
-    # Create an interactive plot of the past temperature and humidity values
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=timestamps, y=past_humidities, name='Humidity', yaxis='y2'))
-    fig.add_trace(go.Scatter(x=timestamps, y=past_temperatures, name='Temperature'))
-    fig.update_layout(
-        xaxis_title='Timestamp',
-        yaxis=dict(title='Temperature (Celsius)'),
-        yaxis2=dict(title='Humidity (%)', overlaying='y', side='right'),
-        hovermode='closest'
-    )
-    plot_data = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
     # Convert the last timestamp to a string:
     last_entry = timestamps[-1].strftime("%Y-%m-%d %H:%M")
 
-    # Render the HTML page with the current temperature and humidity values, and the plot
-    return render_template('index.html', plot_data=plot_data, min_temperature=min(past_temperatures),
-                           max_temperature=max(past_temperatures), min_humidity=min(past_humidities),
-                           max_humidity=max(past_humidities), temperature=temperature, humidity=humidity,
-                           last_entry=last_entry)
+    sensor_card = Sensor_card("Temperature Sensor", "Void", past_temperatures, past_humidities, timestamps)
+
+    # read templates/index.html as string
+    with open("templates/index.html", "r") as f:
+        html = f.read()
+    # replace placeholders with actual values
+    html = html.replace("HTML_PLACEHOLDER", sensor_card.get_sensor_card())
+    html = html.replace("JS_PLACEHOLDER", sensor_card.get_sensor_card_js())
+
+    return html
 
 
 @app.route('/data', methods=['POST'])
@@ -117,4 +108,4 @@ def handle_data():
 
 
 if __name__ == '__main__':
-    app.run('0.0.0.0', port=5000)
+    app.run('0.0.0.0', port=PORT)

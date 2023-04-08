@@ -8,7 +8,7 @@ class Sensor_card():
         self.sensor_name = sensor_name
         self.sensor_location = sensor_location
         # generate unique id
-        self.uid = uuid.uuid4().hex
+        self.uid = str(uuid.uuid4().hex)
 
         self.temperatures = temperatures
         self.humidities = humidities
@@ -32,23 +32,23 @@ class Sensor_card():
 
     def get_sensor_card(self):
         return f"""
+                <div class="card">
                 <div class="card-body">
                             <h2>{self.sensor_name} ({self.sensor_location})</h2>
-                            <p>Temperature: \{{self.temperature}\}&deg;C 
-                            (min: \{{min(self.temperature)}}&deg;C, 
-                            max: \{{max(max_temperature)}\}&deg;C)</p>
-                            <p>Humidity: \{{self.humidity}}% 
-                            (min: \{{min(self.humidities)}\}%, 
-                            max: \{{max(self.humidities)}\}%)</p>
-                            <p>Last entry is from \{{self.last_entry}\}</p>
+                            <p>Temperature: {self.temperature}&deg;C 
+                            (min: {min(self.temperatures)}&deg;C, 
+                            max: {max(self.temperatures)}&deg;C)</p>
+                            <p>Humidity: {self.humidity}% 
+                            (min: {min(self.humidities)}%, 
+                            max: {max(self.humidities)}%)</p>
+                            <p>Last entry is from {self.last_entry}</p>
         
                             <div id={self.uid} class='chart'></div>
                 </div> 
+                </div>
                 """
 
     def get_sensor_card_js(self):
-        return ''
-        # return f"""
-        #         var graphs_{self.uid} = \{{self.plot_data} | safe}\};
-        #         Plotly.plot({self.uid},graphs_{self.uid},{});
-        #         """
+        return f"""
+                Plotly.plot("{self.uid}",{self.plot_data});
+                """
