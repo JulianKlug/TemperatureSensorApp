@@ -318,6 +318,24 @@ DEVICES = [ESP_SENSOR, *TUYA_DEVICES]
 app.layout = html.Div(
     children=[
         html.Div(
+            className="card",
+            children=[
+                html.H1("Ob der Baechi", className="card-title"),
+                html.Hr(),
+                html.P(
+                    children=[
+                        "Sauce: ",
+                        html.A(
+                            "GitHub",
+                            href="https://github.com/JulianKlug/TemperatureSensorApp",
+                            target="_blank",  # Open in new tab
+                        ),
+                    ],
+                    className="card-text",
+                ),
+            ],
+        ),
+        html.Div(
             id="sensor-cards",
             children=[
                 html.Div(f"{device.name} data will appear here.", id=f"{device.uid}")
@@ -352,31 +370,8 @@ app.layout = html.Div(
     [Input("interval-component", "n_intervals")],
 )
 def update_cards(n_intervals):
-    # Header Card
-    header_card = html.Div(
-        className="card",
-        children=[
-            html.H1("Ob der Baechi", className="card-title"),
-            html.Hr(),
-            html.P(
-                children=[
-                    "Sauce: ",
-                    html.A(
-                        "GitHub",
-                        href="https://github.com/JulianKlug/TemperatureSensorApp",
-                        target="_blank",  # Open in new tab
-                    ),
-                ],
-                className="card-text",
-            ),
-        ],
-    )
-
-    card_htmls = [header_card]
+    card_htmls = []
     for sensor in DEVICES:
-        # Get the HTML and Plotly JSON from the sensor
-        # card_html, plot_data = sensor.get_card()
-
         card_content = sensor.get_card()
         # Append the card and graph to the layout
         card_htmls.append(card_content)
