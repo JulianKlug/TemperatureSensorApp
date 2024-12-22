@@ -12,8 +12,6 @@ from flask import Flask, request
 from pymongo import MongoClient
 from tuya_connector import TuyaOpenAPI
 
-from utils.NotificationSystem import NotificationSystem
-
 # config_fn = Path("~/.config/buerchen_config.json").expanduser()
 config_fn = Path("buerchen_config.json").expanduser()
 
@@ -53,10 +51,6 @@ class Config:
 
 CONFIG = Config().from_config()
 
-# setup notification
-# notification_system = NotificationSystem(
-#     "hendrik.klug@gmail.com", ["hendrik.klug@gmail.com", "tensu.wave@gmail.com"]
-# )
 
 app = Flask(__name__)
 mongo_client = MongoClient(CONFIG.mongodb_URI)
@@ -81,7 +75,8 @@ class Sensor:
 
     def verify_temperature_value(self, temperature_value: float):
         if temperature_value < CONFIG.temp_warn_limit:
-            notification_system.notify(
+            # notification_system.notify(
+            print(
                 f"Temperature of {self.name} is below {CONFIG.temp_warn_limit}",
                 f"Temperature is {temperature_value}°C",
             )
