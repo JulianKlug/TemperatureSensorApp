@@ -545,6 +545,7 @@ def log_tuya_values():
 @app.server.route("/data", methods=["POST"])
 def handle_data():
     ESP_SENSOR.log_status(request)
+    ShellyPowerSensor().log_status()
 
     log_tuya_values()
 
