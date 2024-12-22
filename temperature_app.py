@@ -129,17 +129,17 @@ class TempHumidSensor(Sensor):
             html.P(f"Last entry is from {last_entry_date}"),
         ]
 
-    def get_card(self):
-        # Get the past temperature and humidity values from the database
-        now = datetime.now(local_timezone)
-        past = now - timedelta(hours=24)
-        past_data = list(self.mongo_collection.find({"date": {"$gte": past}}))
+    def get_card(self, start_date, end_date):
+        # Fetch data within the given date range
+        past_data = list(
+            self.mongo_collection.find({"date": {"$gte": start_date, "$lte": end_date}})
+        )
 
         if not past_data:
             past_temperatures = []
             past_humidities = []
             timestamps = []
-            last_entry_date = "No data available from the last 24 hours."
+            last_entry_date = "No data available in the selected range."
             battery_status = None
         else:
             past_temperatures = [data["temperature"] for data in past_data]
@@ -228,10 +228,11 @@ class KellerPlug(Sensor):
         )
         return fig
 
-    def get_card(self):
-        now = datetime.now(local_timezone)
-        past = now - timedelta(hours=24)
-        past_data = list(self.mongo_collection.find({"date": {"$gte": past}}))
+    def get_card(self, start_date, end_date):
+        # Fetch data within the given date range
+        past_data = list(
+            self.mongo_collection.find({"date": {"$gte": start_date, "$lte": end_date}})
+        )
 
         if not past_data:
             return html.Div(
@@ -330,6 +331,25 @@ app.layout = html.Div(
                             href="https://github.com/JulianKlug/TemperatureSensorApp",
                             target="_blank",  # Open in new tab
                         ),
+                        html.Div(
+                            [
+                                html.Br(),
+                                html.Br(),
+                                html.Label("Start Date: "),
+                                dcc.DatePickerSingle(
+                                    id="start-date-picker",
+                                    date=(datetime.now() - timedelta(days=1)).date(),
+                                    display_format="YYYY-MM-DD",
+                                    style={"margin-right": "40px"},
+                                ),
+                                html.Label("End Date: "),
+                                dcc.DatePickerSingle(
+                                    id="end-date-picker",
+                                    date=datetime.now(),
+                                    display_format="YYYY-MM-DD",
+                                ),
+                            ],
+                        ),
                     ],
                     className="card-text",
                 ),
@@ -367,12 +387,20 @@ app.layout = html.Div(
 # Callback to update sensor cards
 @app.callback(
     Output("sensor-cards", "children"),
-    [Input("interval-component", "n_intervals")],
+    [
+        Input("start-date-picker", "date"),
+        Input("end-date-picker", "date"),
+    ],
 )
-def update_cards(n_intervals):
+def update_cards(start_date, end_date):
+    # Convert selected dates to datetime objects
+    start_date = (
+        datetime.fromisoformat(start_date) if start_date else datetime(2020, 1, 1)
+    )
+    end_date = datetime.fromisoformat(end_date) if end_date else datetime.now()
     card_htmls = []
     for sensor in DEVICES:
-        card_content = sensor.get_card()
+        card_content = sensor.get_card(start_date, end_date)
         # Append the card and graph to the layout
         card_htmls.append(card_content)
     return card_htmls
