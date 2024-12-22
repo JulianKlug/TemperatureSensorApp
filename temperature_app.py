@@ -8,6 +8,7 @@ import dash
 import numpy as np
 import plotly.graph_objs as go
 import pytz
+import requests
 from dash import Input, Output, dcc, html
 from flask import request
 from pymongo import MongoClient
@@ -37,6 +38,9 @@ class Config:
     tuya_access_id: str = None
     tuya_access_key: str = None
 
+    # shelly settings
+    shelly_auth_key: str = None
+
     def from_config(self):
         with open(config_fn) as f:
             config = json.load(f)
@@ -46,6 +50,7 @@ class Config:
             self.notification_receiver_addresses = config["receiver_addresses"]
             self.tuya_access_id = config["tuya_access_id"]
             self.tuya_access_key = config["tuya_access_key"]
+            self.shelly_auth_key = config["shelly_auth_key"]
 
         return self
 
@@ -310,9 +315,130 @@ class EspTempSensor(TempHumidSensor):
         )
 
 
+@dataclass
+class ShellyPowerSensor(Sensor):
+    collection_name: str = "Shelly Power Sensor"
+    name: str = "Shelly Power Sensor"
+    device_id: str = "08f9e047bcd5"
+    mongo_collection: any = None
+    api_url: str = "https://shelly-103-eu.shelly.cloud/device/status"
+    auth_key: str = CONFIG.shelly_auth_key
+
+    def log_status(self) -> None:
+        # Fetch data from the Shelly API
+        payload = {
+            "id": self.device_id,
+            "auth_key": self.auth_key,
+        }
+        response = requests.post(self.api_url, data=payload)
+        if response.status_code != 200:
+            print(f"Failed to fetch data for {self.name}")
+            return
+
+        data = response.json()
+        if not data.get("isok"):
+            print(f"Invalid response for {self.name}: {data}")
+            return
+
+        device_status = data["data"]["device_status"]
+        emeter_data = device_status.get("emeters", [{}])[0]
+        emeter_data = {
+            k: v for k, v in zip(["A", "B", "C"], device_status.get("emeters", []))
+        }
+
+        timestamp = datetime.now(local_timezone)
+
+        # Log data to MongoDB
+        self.mongo_collection.insert_one(
+            {
+                "emeter_data": emeter_data,
+                "date": timestamp,
+                "total_power": device_status.get("total_power"),
+            }
+        )
+
+    def get_card(self, start_date, end_date):
+        # Fetch data within the given date range
+        past_data = list(
+            self.mongo_collection.find({"date": {"$gte": start_date, "$lte": end_date}})
+        )
+
+        if not past_data:
+            return html.Div(
+                className="card",
+                children=[
+                    html.H2(self.name),
+                    html.P("No data available in the selected range"),
+                ],
+            )
+
+        # Extract data
+        timestamps = [data["date"] for data in past_data]
+        emeter_data = [data["emeter_data"] for data in past_data]
+        total_power = [data.get("total_power", 0) for data in past_data]
+
+        # Aggregate power data for each meter (A, B, C)
+        power_data = {
+            "A": [meter.get("power", 0) for meter in emeter_data],
+            "B": [meter.get("power", 0) for meter in emeter_data],
+            "C": [meter.get("power", 0) for meter in emeter_data],
+        }
+
+        # Create the Plotly figure
+        fig = go.Figure()
+        for phase, values in power_data.items():
+            fig.add_trace(
+                go.Scatter(
+                    x=timestamps,
+                    y=values,
+                    mode="lines",
+                    name=f"Phase {phase} Power (W)",
+                )
+            )
+        fig.add_trace(
+            go.Scatter(
+                x=timestamps,
+                y=total_power,
+                mode="lines",
+                name="Total Power (W)",
+                line=dict(dash="dash"),
+            )
+        )
+
+        fig.update_layout(
+            xaxis_title="Timestamp",
+            yaxis=dict(title="Power (W)"),
+            hovermode="closest",
+            title=f"{self.name} Power Usage",
+        )
+
+        # Calculate average power
+        avg_total_power = round(np.mean(total_power), 2) if total_power else "No data"
+
+        # Return the card layout
+        return html.Div(
+            className="card",
+            children=[
+                html.Div(
+                    className="card-body",
+                    children=[
+                        html.H2(self.name),
+                        html.P(f"Average Total Power: {avg_total_power} W"),
+                        html.P(
+                            f"Last entry: {timestamps[-1].strftime('%Y-%m-%d %H:%M')}"
+                            if timestamps
+                            else "No data available"
+                        ),
+                        dcc.Graph(figure=fig),
+                    ],
+                )
+            ],
+        )
+
+
 TUYA_DEVICES = [BottomBathroomTempSensor(), KellerPlug()]
 ESP_SENSOR = EspTempSensor()
-DEVICES = [ESP_SENSOR, *TUYA_DEVICES]
+DEVICES: list[Sensor] = [ESP_SENSOR, *TUYA_DEVICES, ShellyPowerSensor()]
 
 
 # App layout
