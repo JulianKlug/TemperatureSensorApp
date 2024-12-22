@@ -471,7 +471,8 @@ app.layout = html.Div(
                                 html.Label("End Date: "),
                                 dcc.DatePickerSingle(
                                     id="end-date-picker",
-                                    date=datetime.now(),
+                                    # Default to tomorrow's date to get all entries from today
+                                    date=datetime.now() + timedelta(days=1),
                                     display_format="YYYY-MM-DD",
                                 ),
                             ],
