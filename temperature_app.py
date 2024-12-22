@@ -379,9 +379,9 @@ class ShellyPowerSensor(Sensor):
 
         # Aggregate power data for each meter (A, B, C)
         power_data = {
-            "A": [meter.get("power", 0) for meter in emeter_data],
-            "B": [meter.get("power", 0) for meter in emeter_data],
-            "C": [meter.get("power", 0) for meter in emeter_data],
+            "A": [meter["A"].get("power", 0) for meter in emeter_data],
+            "B": [meter["B"].get("power", 0) for meter in emeter_data],
+            "C": [meter["C"].get("power", 0) for meter in emeter_data],
         }
 
         # Create the Plotly figure
