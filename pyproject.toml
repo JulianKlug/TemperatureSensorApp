@@ -5,10 +5,12 @@ description = "Temperature flask app for Bürchen."
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "dash>=2.9.3",
     "flask>=3.1.0",
     "numpy>=2.0.2",
     "plotly>=5.24.1",
     "pymongo>=4.10.1",
     "pytz>=2024.2",
+    "setuptools>=75.6.0",
     "tuya-connector-python>=0.1.2",
 ]
