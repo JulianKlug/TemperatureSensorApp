@@ -4,11 +4,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import dash
 import numpy as np
-import plotly
 import plotly.graph_objs as go
 import pytz
-from flask import Flask, request
+from dash import Input, Output, dcc, html
+from flask import request
 from pymongo import MongoClient
 from tuya_connector import TuyaOpenAPI
 
@@ -51,8 +52,10 @@ class Config:
 
 CONFIG = Config().from_config()
 
+# Initialize Dash app
+app = dash.Dash(__name__)
+app.title = "Ob der Baechi"
 
-app = Flask(__name__)
 mongo_client = MongoClient(CONFIG.mongodb_URI)
 db = mongo_client[CONFIG.mongodb_database]
 
@@ -97,40 +100,34 @@ class TempHumidSensor(Sensor):
             yaxis2=dict(title="Humidity (%)", overlaying="y", side="right"),
             hovermode="closest",
         )
-        return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        return fig
 
     def get_html_sensor_card(
         self, temperatures, humidities, last_entry_date, battery_status=None
-    ) -> str:
-        battery_status = f"Battery Status: {battery_status}" if battery_status else ""
+    ):
+        battery_status_text = (
+            f"Battery Status: {battery_status}" if battery_status else ""
+        )
         current_temperature = temperatures[-1] if temperatures else "No data available"
         current_humidity = humidities[-1] if humidities else "No data available"
         min_temperature = min(temperatures) if temperatures else "No data available"
         max_temperature = max(temperatures) if temperatures else "No data available"
         min_humidity = min(humidities) if humidities else "No data available"
         max_humidity = max(humidities) if humidities else "No data available"
-        return f"""
-                <div class="card">
-                <div class="card-body">
-                            <h2>{self.name}</h2>
-                            <p>Temperature: {current_temperature}&deg;C 
-                            (min: {min_temperature}&deg;C, 
-                            max: {max_temperature}&deg;C)</p>
-                            <p>Humidity: {current_humidity}% 
-                            (min: {min_humidity}%, 
-                            max: {max_humidity}%)</p>
-                            <p>{battery_status}</p>
-                            <p>Last entry is from {last_entry_date}</p>
 
-                            <div id={self.uid} class='chart'></div>
-                </div> 
-                </div>
-                """
-
-    def get_sensor_card_js(self, plot_data):
-        return f"""
-                Plotly.plot("{self.uid}",{plot_data});
-                """
+        return [
+            html.H2(self.name),
+            html.P(
+                f"Temperature: {current_temperature}°C "
+                f"(min: {min_temperature}°C, max: {max_temperature}°C)"
+            ),
+            html.P(
+                f"Humidity: {current_humidity}% "
+                f"(min: {min_humidity}%, max: {max_humidity}%)"
+            ),
+            html.P(battery_status_text),
+            html.P(f"Last entry is from {last_entry_date}"),
+        ]
 
     def get_card(self):
         # Get the past temperature and humidity values from the database
@@ -151,14 +148,27 @@ class TempHumidSensor(Sensor):
             last_entry_date = timestamps[-1].strftime("%Y-%m-%d %H:%M")
             battery_status = past_data[-1].get("battery_state")
 
-        plot_data = self._create_figure(timestamps, past_humidities, past_temperatures)
+        # Create the figure
+        fig = self._create_figure(timestamps, past_humidities, past_temperatures)
 
-        return self.get_html_sensor_card(
-            past_temperatures,
-            past_humidities,
-            last_entry_date=last_entry_date,
-            battery_status=battery_status,
-        ), self.get_sensor_card_js(plot_data)
+        # Create the card layout using Dash HTML components
+        return html.Div(
+            className="card",
+            children=[
+                html.Div(
+                    className="card-body",
+                    children=[
+                        *self.get_html_sensor_card(
+                            past_temperatures,
+                            past_humidities,
+                            last_entry_date,
+                            battery_status=battery_status,
+                        ),
+                        dcc.Graph(figure=fig),
+                    ],
+                )
+            ],
+        )
 
 
 @dataclass
@@ -208,7 +218,7 @@ class KellerPlug(Sensor):
         self.mongo_collection.insert_one(log_dict)
 
     def _create_figure(self, timestamps, temperatures):
-        # Create an interactive plot of the past temperature and humidity values
+        # Create an interactive plot of the past temperature values
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=timestamps, y=temperatures, name="Temperature"))
         fig.update_layout(
@@ -216,54 +226,63 @@ class KellerPlug(Sensor):
             yaxis=dict(title="Temperature (Celsius)"),
             hovermode="closest",
         )
-        return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-    def get_html_sensor_card(
-        self, temperatures, threshold_temperature, last_entry, correction_value
-    ) -> str:
-        return f"""
-                <div class="card">
-                <div class="card-body">
-                            <h2>{self.name}</h2>
-                            <p>Temperature: {temperatures[-1]}&deg;C 
-                            (min: {min(temperatures)}&deg;C, 
-                            max: {max(temperatures)}&deg;C)</p>
-                            <p>Temperature threshold: {threshold_temperature}&deg;C</p>
-                            <p>Correction Value: {correction_value}&deg;C</p>
-                            <p>Last entry is from {last_entry}</p>
-
-                            <div id={self.uid} class='chart'></div>
-                </div> 
-                </div>
-                """
-
-    def get_sensor_card_js(self, plot_data):
-        return f"""
-                Plotly.plot("{self.uid}",{plot_data});
-                """
+        return fig
 
     def get_card(self):
-        # Get the past temperature and humidity values from the database
         now = datetime.now(local_timezone)
         past = now - timedelta(hours=24)
         past_data = list(self.mongo_collection.find({"date": {"$gte": past}}))
+
+        if not past_data:
+            return html.Div(
+                className="card",
+                children=[
+                    html.H2(self.name),
+                    html.P("No data available in the last 24 hours"),
+                ],
+            )
+
+        # Extract temperature data
         past_temperatures = [data["current_temperature"] for data in past_data]
         timestamps = [data["date"] for data in past_data]
-        if not past_data:
-            return f"<h2>{self.name}: No data available<h2>", None
+        threshold_temperature = past_data[-1]["set_temperature"]
+        correction_value = past_data[-1]["correction_value"]
 
-        last_data = past_data[-1]
-        threshold_temperature = last_data["set_temperature"]
-        correction_value = last_data["correction_value"]
+        # Calculate min and max temperatures
+        min_temperature = (
+            min(past_temperatures) if past_temperatures else "No data available"
+        )
+        max_temperature = (
+            max(past_temperatures) if past_temperatures else "No data available"
+        )
 
-        plot_data = self._create_figure(timestamps, past_temperatures)
+        # Create the figure
+        fig = self._create_figure(timestamps, past_temperatures)
 
-        return self.get_html_sensor_card(
-            past_temperatures,
-            threshold_temperature,
-            timestamps[-1].strftime("%Y-%m-%d %H:%M"),
-            correction_value=correction_value,
-        ), self.get_sensor_card_js(plot_data)
+        # Return the card layout
+        return html.Div(
+            className="card",
+            children=[
+                html.Div(
+                    className="card-body",
+                    children=[
+                        html.H2(self.name),
+                        html.P(
+                            f"Temperature: {past_temperatures[-1]}°C "
+                            f"(min: {min_temperature}°C, max: {max_temperature}°C)"
+                            if past_temperatures
+                            else "No temperature data available"
+                        ),
+                        html.P(f"Threshold Temperature: {threshold_temperature}°C"),
+                        html.P(f"Correction Value: {correction_value}°C"),
+                        html.P(
+                            f"Last entry: {timestamps[-1].strftime('%Y-%m-%d %H:%M')}"
+                        ),
+                        dcc.Graph(figure=fig),
+                    ],
+                )
+            ],
+        )
 
 
 @dataclass
@@ -295,28 +314,73 @@ ESP_SENSOR = EspTempSensor()
 DEVICES = [ESP_SENSOR, *TUYA_DEVICES]
 
 
-def delete_all_documents():
-    # Delete all documents from the collection
-    result = collection.delete_many({})
-    print(result.deleted_count, "documents deleted.")
+# App layout
+app.layout = html.Div(
+    children=[
+        html.Div(
+            id="sensor-cards",
+            children=[
+                html.Div(f"{device.name} data will appear here.", id=f"{device.uid}")
+                for device in DEVICES
+            ],
+        ),
+        dcc.Interval(
+            id="interval-component", interval=10 * 1000, n_intervals=0
+        ),  # Updates every 10 seconds
+        # Add Ceyna at the bottom left
+        html.Div(
+            children=[
+                html.Img(
+                    src="https://github.com/JulianKlug/TemperatureSensorApp/raw/main/ceyna.png",
+                    alt="Ceyna",
+                    style={
+                        "position": "fixed",
+                        "bottom": "10px",
+                        "right": "10px",
+                        "width": "450px",  # Adjust width as needed
+                    },
+                )
+            ],
+        ),
+    ]
+)
 
 
-@app.route("/")
-def index():
-    card_htmls = []
-    card_java_scripts = []
+# Callback to update sensor cards
+@app.callback(
+    Output("sensor-cards", "children"),
+    [Input("interval-component", "n_intervals")],
+)
+def update_cards(n_intervals):
+    # Header Card
+    header_card = html.Div(
+        className="card",
+        children=[
+            html.H1("Ob der Baechi", className="card-title"),
+            html.Hr(),
+            html.P(
+                children=[
+                    "Sauce: ",
+                    html.A(
+                        "GitHub",
+                        href="https://github.com/JulianKlug/TemperatureSensorApp",
+                        target="_blank",  # Open in new tab
+                    ),
+                ],
+                className="card-text",
+            ),
+        ],
+    )
 
+    card_htmls = [header_card]
     for sensor in DEVICES:
-        card_html, card_java_script = sensor.get_card()
-        card_htmls.append(card_html)
-        if card_java_script:
-            card_java_scripts.append(card_java_script)
+        # Get the HTML and Plotly JSON from the sensor
+        # card_html, plot_data = sensor.get_card()
 
-    html_index = Path(Path(__file__).parent / "templates" / "index.html").read_text()
-    html_index = html_index.replace("HTML_PLACEHOLDER", "\n".join(card_htmls))
-    html_index = html_index.replace("JS_PLACEHOLDER", "\n".join(card_java_scripts))
-
-    return html_index
+        card_content = sensor.get_card()
+        # Append the card and graph to the layout
+        card_htmls.append(card_content)
+    return card_htmls
 
 
 def log_tuya_values():
@@ -329,14 +393,14 @@ def log_tuya_values():
         device.log_status(openapi)
 
 
-@app.route("/data", methods=["POST"])
+@app.server.route("/data", methods=["POST"])
 def handle_data():
     ESP_SENSOR.log_status(request)
 
     log_tuya_values()
 
-    return "Data inserted into database."
+    return "Data inserted into database.", 200
 
 
 if __name__ == "__main__":
-    app.run("0.0.0.0", port=CONFIG.flask_port)
+    app.run_server(debug=True, host="0.0.0.0", port=CONFIG.flask_port)
