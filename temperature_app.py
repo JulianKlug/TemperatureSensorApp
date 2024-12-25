@@ -58,7 +58,7 @@ class Config:
 CONFIG = Config().from_config()
 
 # Initialize Dash app
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, requests_pathname_prefix='/buerchen/')
 app.title = "Ob der Baechi"
 
 mongo_client = MongoClient(CONFIG.mongodb_URI)
